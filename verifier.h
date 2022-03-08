@@ -5,14 +5,14 @@
 #include <cassert>
 #include <iostream>
 
-std::unordered_set<std::string> reached;
+static std::unordered_set<std::string> reached;
 
 inline void dfs_automata(autonomous & autonom, std::string state){
     reached.insert(state);
     
     for(auto & i : autonom.automata){
-        if(i.first == state && reached.find(i.first) == reached.end()){
-            dfs_automata(autonom,i.first);
+        if(i.first == state && reached.find(i.second) == reached.end()){
+            dfs_automata(autonom,i.second);
         }
     }
 }
@@ -22,9 +22,21 @@ inline bool valid(autonomous & autonom){
 
     dfs_automata(autonom,"start");  
 
-    for(auto & i : reached){
-        std::cout<<i<<std::endl;
+    for(auto & i : autonom.states){
+        if(reached.find(i) == reached.end()){
+            std::cerr<<"Automata has unreachable states\n";
+            return false;
+        }
+        // std::cout<<i<<std::endl;
     }
+    //     std::cout<<std::endl;
 
-    return false;
+    // for(auto & i : reached){
+    //     // if(reached.find(i) == reached.end()){
+    //     //     std::cerr<<"Automata has unreachable states\n";
+    //     //     return false;
+    //     // }
+    //     std::cout<<i<<std::endl;
+    // }
+    return true;
 }

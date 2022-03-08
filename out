@@ -1,4 +1,3 @@
-start
 package org.firstinspires.ftc.teamcode.autonomous;
 
 import static org.opencv.core.Core.inRange;
@@ -86,7 +85,6 @@ public class Autonom extends LinearOpMode
 	private int spline_duck = 0;
 	private int lift_raise_3 = 0;
 	private int lift_raise_2 = 0;
-	private int drop_hand = 0;
 	private int drop = 0;
 	private int start = 0;
 	private int lift_raise_1 = 0;
@@ -111,6 +109,12 @@ public class Autonom extends LinearOpMode
 		        cupa.setPosition(0.75);
 		    }
 		    
+		
+		
+		 
+		
+		
+		
 		
 		}
 	}
@@ -143,24 +147,6 @@ public class Autonom extends LinearOpMode
 		    lift.setAngle(level1,0.5);
 		    if(lift.getAngle() == level1)
 		        {spline_forward = 1;lift_raise_1 = 0;}
-		
-		}
-	}
-	public void state_drop_hand(){
-		if(drop_hand == 1){
-		    if(recorded == 0){
-		        now = t.milliseconds();
-		        recorded = 1;
-		    }else{
-		        if(t.milliseconds() > now + 1000)
-		            {spline_back = 1;drop_hand = 0;}
-		
-		    }
-		
-		 
-		
-		
-		
 		
 		}
 	}
@@ -246,7 +232,6 @@ public class Autonom extends LinearOpMode
         while (!isStopRequested()){
             state_rate_start();
             state_rate_end();
-            state_drop_hand();
             state_lift_raise_1();
             state_lift_raise_2();
             state_start();

@@ -50,14 +50,6 @@
     }
     
 
-#drop_hand time=1000 recorded now
-    if(recorded == 0){
-        now = t.milliseconds();
-        recorded = 1;
-    }else{
-        if(t.milliseconds() > now + 1000)
-            !spline_back
-    }
 
 @spline_duck [100,0,180] rate_start
 @spline_lift [-300,0,0] spline_forward
