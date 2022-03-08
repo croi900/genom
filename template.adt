@@ -1,0 +1,183 @@
+package org.firstinspires.ftc.teamcode.autonomous;
+
+import static org.opencv.core.Core.inRange;
+
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.drive.DcMotorServo;
+import org.firstinspires.ftc.teamcode.drive.OmniSimple;
+import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
+import org.openftc.easyopencv.OpenCvCamera;
+import org.openftc.easyopencv.OpenCvCameraFactory;
+import org.openftc.easyopencv.OpenCvCameraRotation;
+import org.openftc.easyopencv.OpenCvPipeline;
+import org.openftc.easyopencv.OpenCvWebcam;
+
+@Autonomous(name = "regio")
+@Config
+public class Autonom extends LinearOpMode
+{
+
+    public static class CapstonePosition{
+        public static int Position;
+    }
+
+    SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
+
+    DcMotorEx intake = hardwareMap.get(DcMotorEx.class, "intake");
+    DcMotorEx carusel = hardwareMap.get(DcMotorEx.class, "carusel");
+    DcMotorEx intake2 = hardwareMap.get(DcMotorEx.class,"lift");
+
+    DcMotorServo lift = new DcMotorServo(hardwareMap,"intake2",13.79f,28);
+
+
+    Servo panta = hardwareMap.get(Servo.class, "panta");
+    Servo cupa = hardwareMap.get(Servo.class, "cupa");
+
+    
+    ElapsedTime t = new ElapsedTime();
+    double[] vals;
+    
+
+    int stage = 0;
+
+{##}
+
+    OpenCvWebcam webcam;
+
+    @Override
+    public void runOpMode()
+    {
+
+        intake2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        intake2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
+
+        webcam.setPipeline(new SamplePipeline(gamepad1));
+
+
+        webcam.setMillisecondsPermissionTimeout(2500); // Timeout for obtaining permission is configurable. Set before opening.
+
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+
+        intake2.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        waitForStart();
+        webcam.stopStreaming();
+        webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
+        {
+            @Override
+            public void onOpened()
+            {
+
+                webcam.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT);
+            }
+
+            @Override
+            public void onError(int errorCode)
+            {
+
+            }
+        });
+
+        while(!isStarted()){
+            telemetry.addData("pos", CapstonePosition.Position);
+            telemetry.update();
+        }
+        
+        
+        t.reset();
+
+        while (!isStopRequested()){
+            #{}#
+        }
+
+
+    }
+
+
+    class SamplePipeline extends OpenCvPipeline
+    {
+        boolean viewportPaused;
+        double hue = 0;
+        Gamepad g;
+
+
+
+        public SamplePipeline(Gamepad g){
+            this.g = g;
+        }
+
+        @Override
+        public Mat processFrame(Mat input)
+        {
+            Mat blur = new Mat();
+            Imgproc.blur(input,blur,new Size(4,4));
+            Mat temp= new Mat();
+            Imgproc.cvtColor(blur,temp,Imgproc.COLOR_BGR2HSV);
+            Scalar yellow_lower = new Scalar( 60,120, 20);
+            Scalar yellow_upper = new Scalar( 120 ,255, 255);
+            Mat yellow_mask = new Mat();
+            inRange(temp, yellow_lower, yellow_upper,yellow_mask);
+
+            input.setTo(new Scalar(0, 0, 255), yellow_mask);
+
+
+
+            Mat region1_Cb, region2_Cb, region3_Cb;
+
+
+            region1_Cb = yellow_mask.submat(new Rect(new Point(0,0), new Point(320/3,240)));
+            region2_Cb = yellow_mask.submat(new Rect(new Point(320/3,0), new Point(2 * 320/3,240)));
+            region3_Cb = yellow_mask.submat(new Rect(new Point(2 * 320/3,0), new Point(320,240)));
+
+            Imgproc.rectangle(yellow_mask,new Point(0,0), new Point(320/3,240),new Scalar(255,120,0));
+            Imgproc.rectangle(yellow_mask,new Point(320/3,0), new Point(2 * 320/3,240),new Scalar(255,120,0));
+            Imgproc.rectangle(yellow_mask,new Point(2 * 320/3,0), new Point(320,240),new Scalar(255,120,0));
+
+            int avg1,avg2,avg3;
+            avg1 = (int) Core.mean(region1_Cb).val[0];
+            avg2 = (int) Core.mean(region2_Cb).val[0];
+            avg3 = (int) Core.mean(region3_Cb).val[0];
+
+            int maxavg = Math.max(avg1,Math.max(avg2,avg3));
+
+            if(maxavg == avg1){
+                CapstonePosition.Position = 1;
+            }
+
+            if(maxavg == avg2){
+                CapstonePosition.Position = 2;
+            }
+
+            if(maxavg == avg3){
+                CapstonePosition.Position = 3;
+            }
+
+            return yellow_mask;
+        }
+    }
+}
